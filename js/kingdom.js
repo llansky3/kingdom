@@ -14,6 +14,7 @@
     var rating_slider;
     var new_game_el;
     var setup_game_el;
+    var goback_el;    
     var game_info_text;
     var starting_new_game;
     var retry_move_timer;
@@ -775,10 +776,19 @@
         pause_game();
         new_game_el.textContent = "Start Game";
         setup_game_el.disabled = true;
+        goback_el.disabled = false;
         hide_loading(true);
         board.enable_setup();
         G.events.trigger("initSetup");
     }
+
+    function goback() {
+        let current_mode = board.get_mode();
+        board.set_mode("goback");
+        game_history.slice(0, game_history.length - 2);
+        board.restore_board_to_move(board.moves.length - 2);
+        board.set_mode(current_mode);
+    }    
     
     function check_startpos(cb)
     {
@@ -1242,6 +1252,7 @@
         
         new_game_el.textContent = "New Game";
         setup_game_el.disabled = false;
+        goback_el.disabled = true;
         
         if (starting_new_game) {
             return;
@@ -1257,7 +1268,9 @@
         
         stop_game();
         
-        game_history = [];
+        if (!dont_reset) {
+            game_history = [];
+        }
         
         evaler.send("stop");
         evaler.send("ucinewgame");
@@ -1279,9 +1292,16 @@
             
             if (dont_reset) {
                 ///TEMP: There needs to be a way to set turn, castling, and moves (maybe also a PGN and FEN importer).
-                startpos = board.get_fen() + " w - - 0 1";
+                // "K" (White can castle kingside), "Q" (White can castle queenside), "k" (Black can castle kingside), and/or "q" 
+                // w KQkq - 0 1
+                
+                // TODO: Go through moves history to seek for castling
+                let n_fullmoves = Math.floor((Math.max(game_history.length, 1)-1)/2);
+
+                // startpos = board.get_fen() + " w - - 0 1";
+                startpos = board.get_fen() + " w - - 0 " + n_fullmoves;
                 board.turn = "w";
-                board.set_board(startpos);
+                board.set_board(startpos, dont_reset);
                 startpos = "fen " + startpos;
                 ///TODO: Get move count.
                 /*
@@ -1321,7 +1341,9 @@
                         return starting_new_game = false;
                     }
                     
-                    game_history = [{turn: board.turn, pos: "position " + startpos}];
+                    if (!dont_reset) {
+                        game_history = [{turn: board.turn, pos: "position " + startpos}];
+                    }
                     
                     prep_eval(game_history[0].pos, 0);
                     
@@ -1705,6 +1727,7 @@
     {
         new_game_el = G.cde("button", {t: "New Game"}, {click: function () {start_new()}});
         setup_game_el = G.cde("button", {t: "Setup Game"}, {click: function () {init_setup()}});
+        goback_el = G.cde("button", {t: "Go back"}, {click: function () {goback()}});
         game_info_text = G.cde("span", {c: "gameInfoText"});
         var gameTypeSel = G.cde("Select", {oninput: changeType}, [
             G.cde("option", {value: "standard", t: "Standard", selected:"selected"}),
@@ -1714,8 +1737,9 @@
         
         center_el.appendChild(G.cde("documentFragment", [
             new_game_el,
-            setup_game_el,
+            setup_game_el,    
             gameTypeSel,
+            goback_el,    
             game_info_text,
         ]));
         

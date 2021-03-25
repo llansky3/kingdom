@@ -1085,10 +1085,11 @@ var BOARD = function board_init(el, options)
         squares[0][0].appendChild(piece.el);
     }
     
-    function set_board(fen)
+    function set_board(fen, dont_reset)
     {
         var matches;
-        
+        if (typeof dont_reset === 'undefined') { dont_reset = false; }
+
         delete board.last_move;
         
         fen = fen || get_init_pos();
@@ -1121,9 +1122,13 @@ var BOARD = function board_init(el, options)
             board.turn = "w";
         }
         
-        board.moves = [];
-        board.messy = false;
-        
+        // Do not do this if do not reset - we want to keep the history
+        // TODO: We don't want this if the pieces were actually moved around
+        if (!dont_reset) {
+            board.moves = [];
+            board.messy = false;
+        }
+
         if (typeof board.close_modular_window === "function") {
             board.close_modular_window();
         }
@@ -1231,6 +1236,19 @@ var BOARD = function board_init(el, options)
         clear_board_extras();
         G.events.trigger("board_move", {uci: uci, san: san});
         board.last_move = {uci: uci, san: san};
+    }
+
+    function restore_board_to_move(n) {
+        // Restores the board to the situation after N moves
+        let history_of_moves = [...board.moves];
+        let i;
+        // Set the board to starting position
+        board.set_board();
+        // Replay the moves
+        for(i = 0; i < n; i++) {
+            move(history_of_moves[i]);
+        }
+        board.moves = [...history_of_moves.slice(0,n)];
     }
     
     function move_backward(data)
@@ -1918,6 +1936,7 @@ var BOARD = function board_init(el, options)
         clear_board_extras: clear_board_extras,
         select_piece: select_piece,
         flip: flip,
+        restore_board_to_move: restore_board_to_move,
     /// onmove()
     /// onswitch()
     /// turn
