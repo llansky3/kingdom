@@ -785,7 +785,8 @@
     function goback() {
         let current_mode = board.get_mode();
         board.set_mode("goback");
-        game_history.slice(0, game_history.length - 2);
+        game_history = game_history.slice(0, game_history.length - 2);
+        zobrist_keys = zobrist_keys.slice(0, zobrist_keys.length - 3);
         board.restore_board_to_move(board.moves.length - 2);
         board.set_mode(current_mode);
     }    
@@ -1328,31 +1329,43 @@
                     return;
                 }
                 
-                zobrist_keys = [];
-                stalemate_by_rules = null;
-                pieces_moved = false;
+                if (!dont_reset) {
+                    zobrist_keys = [];
+                    stalemate_by_rules = null;
+                    pieces_moved = false;
                 
-                set_cur_pos_cmd();
+                
+                    set_cur_pos_cmd();
+                }
                 //engine.send("position fen 6R1/1pp5/5k2/p1b4r/P1P2p2/1P5r/4R2P/7K w - - 0 39");
                 //board.moves = "e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d4 e5d4 e1g1 f6e4 f1e1 d7d5 c4d5 d8d5 b1c3 d5c4 c3e4 c8e6 b2b3 c4d5 c1g5 f8b4 c2c3 f7f5 e4d6 b4d6 c3c4 d5c5 d1e2 e8g8 e2e6 g8h8 a1d1 f5f4 e1e4 c5a5 e4e2 a5f5 e6f5 f8f5 g5h4 a8f8 d1d3 h7h6 f3d4 c6d4 d3d4 g7g5 h4g5 h6g5 g1f1 g5g4 f2f3 g4f3 g2f3 h8g7 a2a4 f8h8 f1g2 g7f6 g2h1 h8h3 d4d3 d6c5 e2b2 f5g5 b2b1 a7a5 b1f1 c5e3 f1e1 h3f3 d3d8 g5h5 d8g8 f3h3 e1e2 e3c5".split(" ");
-                set_legal_moves(function onset()
-                {
-                    if (stop_new_game) {
-                        return starting_new_game = false;
-                    }
-                    
-                    if (!dont_reset) {
+                if (!dont_reset) {
+                    set_legal_moves(function onset()
+                    {
+                        if (stop_new_game) {
+                            return starting_new_game = false;
+                        }
+                        
                         game_history = [{turn: board.turn, pos: "position " + startpos}];
-                    }
-                    
-                    prep_eval(game_history[0].pos, 0);
-                    
-                    clock_manager.reset_clocks();
-                    starting_new_game = false;
-                    hide_loading();
-                    tell_engine_to_move();
-                    G.events.trigger("newGameBegins");
-                });
+                        
+                        prep_eval(game_history[0].pos, 0);
+                        
+                        clock_manager.reset_clocks();
+                        starting_new_game = false;
+                        hide_loading();
+                        tell_engine_to_move();
+                        G.events.trigger("newGameBegins");
+                    });
+                } else {
+                    startpos = "startpos";
+                    set_cur_pos_cmd();
+                    set_legal_moves(function onset() {
+                        prep_eval(game_history[game_history.length - 1].pos, game_history.length - 1);
+                        starting_new_game = false;
+                        hide_loading();
+                        tell_engine_to_move();
+                    });
+                }
             });
         });
     }
