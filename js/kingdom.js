@@ -785,6 +785,7 @@
     function goback() {
         let current_mode = board.get_mode();
         board.set_mode("goback");
+        // TODO: Castling seems to be more moves - not really
         game_history = game_history.slice(0, game_history.length - 2);
         zobrist_keys = zobrist_keys.slice(0, zobrist_keys.length - 3);
         board.restore_board_to_move(board.moves.length - 2);
@@ -1300,8 +1301,8 @@
                 let n_fullmoves = Math.floor((Math.max(game_history.length, 1)-1)/2);
 
                 // startpos = board.get_fen() + " w - - 0 1";
-                startpos = board.get_fen() + " w - - 0 " + n_fullmoves;
-                board.turn = "w";
+                startpos = board.get_fen() + " " + board.turn + " - - 0 " + n_fullmoves;
+                //board.turn = "b"; //?
                 board.set_board(startpos, dont_reset);
                 startpos = "fen " + startpos;
                 ///TODO: Get move count.
