@@ -14,7 +14,10 @@
     var rating_slider;
     var new_game_el;
     var setup_game_el;
-    var goback_el;    
+    var goback_el; 
+    var goingback = false;
+    var goback_startpos; 
+    var currentturn_el;  
     var game_info_text;
     var starting_new_game;
     var retry_move_timer;
@@ -777,6 +780,7 @@
         new_game_el.textContent = "Start Game";
         setup_game_el.disabled = true;
         goback_el.disabled = false;
+        currentturn_el.disabled = false;
         hide_loading(true);
         board.enable_setup();
         G.events.trigger("initSetup");
@@ -788,8 +792,9 @@
         // TODO: Castling seems to be more moves - not really
         game_history = game_history.slice(0, game_history.length - 2);
         zobrist_keys = zobrist_keys.slice(0, zobrist_keys.length - 3);
-        board.restore_board_to_move(board.moves.length - 2);
+        board.restore_board_to_move(board.moves.length - 2, goback_startpos);
         board.set_mode(current_mode);
+        goingback = true;
     }    
     
     function check_startpos(cb)
@@ -1255,6 +1260,7 @@
         new_game_el.textContent = "New Game";
         setup_game_el.disabled = false;
         goback_el.disabled = true;
+        currentturn_el.disabled = true;
         
         if (starting_new_game) {
             return;
@@ -1270,7 +1276,7 @@
         
         stop_game();
         
-        if (!dont_reset) {
+        if (!goingback) {
             game_history = [];
         }
         
@@ -1301,9 +1307,17 @@
                 let n_fullmoves = Math.floor((Math.max(game_history.length, 1)-1)/2);
 
                 // startpos = board.get_fen() + " w - - 0 1";
-                startpos = board.get_fen() + " " + board.turn + " - - 0 " + n_fullmoves;
                 //board.turn = "b"; //?
-                board.set_board(startpos, dont_reset);
+                board.turn = currentturn_el.value; 
+                if (goingback) {
+                    startpos = board.get_fen() + " " + board.turn + " - - 0 1";
+                    board.set_board(startpos, true);
+                } else {
+                    //startpos = board.get_fen() + " " + board.turn + " - - 0 " + n_fullmoves;
+                    startpos = board.get_fen() + " " + board.turn + " - - 0 " + n_fullmoves;
+                    board.set_board(startpos);
+                    goback_startpos = startpos;
+                }
                 startpos = "fen " + startpos;
                 ///TODO: Get move count.
                 /*
@@ -1330,34 +1344,7 @@
                     return;
                 }
                 
-                if (!dont_reset) {
-                    zobrist_keys = [];
-                    stalemate_by_rules = null;
-                    pieces_moved = false;
-                
-                
-                    set_cur_pos_cmd();
-                }
-                //engine.send("position fen 6R1/1pp5/5k2/p1b4r/P1P2p2/1P5r/4R2P/7K w - - 0 39");
-                //board.moves = "e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d4 e5d4 e1g1 f6e4 f1e1 d7d5 c4d5 d8d5 b1c3 d5c4 c3e4 c8e6 b2b3 c4d5 c1g5 f8b4 c2c3 f7f5 e4d6 b4d6 c3c4 d5c5 d1e2 e8g8 e2e6 g8h8 a1d1 f5f4 e1e4 c5a5 e4e2 a5f5 e6f5 f8f5 g5h4 a8f8 d1d3 h7h6 f3d4 c6d4 d3d4 g7g5 h4g5 h6g5 g1f1 g5g4 f2f3 g4f3 g2f3 h8g7 a2a4 f8h8 f1g2 g7f6 g2h1 h8h3 d4d3 d6c5 e2b2 f5g5 b2b1 a7a5 b1f1 c5e3 f1e1 h3f3 d3d8 g5h5 d8g8 f3h3 e1e2 e3c5".split(" ");
-                if (!dont_reset) {
-                    set_legal_moves(function onset()
-                    {
-                        if (stop_new_game) {
-                            return starting_new_game = false;
-                        }
-                        
-                        game_history = [{turn: board.turn, pos: "position " + startpos}];
-                        
-                        prep_eval(game_history[0].pos, 0);
-                        
-                        clock_manager.reset_clocks();
-                        starting_new_game = false;
-                        hide_loading();
-                        tell_engine_to_move();
-                        G.events.trigger("newGameBegins");
-                    });
-                } else {
+                if (goingback) {
                     startpos = "startpos";
                     set_cur_pos_cmd();
                     set_legal_moves(function onset() {
@@ -1365,6 +1352,32 @@
                         starting_new_game = false;
                         hide_loading();
                         tell_engine_to_move();
+                    });
+                    goingback = false;
+                } else {   
+                    zobrist_keys = [];
+                    stalemate_by_rules = null;
+                    pieces_moved = false;
+                
+                    set_cur_pos_cmd();
+                    //engine.send("position fen 6R1/1pp5/5k2/p1b4r/P1P2p2/1P5r/4R2P/7K w - - 0 39");
+                    //board.moves = "e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d4 e5d4 e1g1 f6e4 f1e1 d7d5 c4d5 d8d5 b1c3 d5c4 c3e4 c8e6 b2b3 c4d5 c1g5 f8b4 c2c3 f7f5 e4d6 b4d6 c3c4 d5c5 d1e2 e8g8 e2e6 g8h8 a1d1 f5f4 e1e4 c5a5 e4e2 a5f5 e6f5 f8f5 g5h4 a8f8 d1d3 h7h6 f3d4 c6d4 d3d4 g7g5 h4g5 h6g5 g1f1 g5g4 f2f3 g4f3 g2f3 h8g7 a2a4 f8h8 f1g2 g7f6 g2h1 h8h3 d4d3 d6c5 e2b2 f5g5 b2b1 a7a5 b1f1 c5e3 f1e1 h3f3 d3d8 g5h5 d8g8 f3h3 e1e2 e3c5".split(" ");
+  
+                    set_legal_moves(function onset()
+                    {
+                        if (stop_new_game) {
+                            return starting_new_game = false;
+                        }
+                        
+                        game_history = [{turn: board.turn, pos: "position " + startpos}];
+                        //game_history = [{turn: currentturn_el.value, pos: "position " + startpos}];
+                        prep_eval(game_history[0].pos, 0);
+                        
+                        clock_manager.reset_clocks();
+                        starting_new_game = false;
+                        hide_loading();
+                        tell_engine_to_move();
+                        G.events.trigger("newGameBegins");
                     });
                 }
             });
@@ -1741,6 +1754,11 @@
     {
         new_game_el = G.cde("button", {t: "New Game"}, {click: function () {start_new()}});
         setup_game_el = G.cde("button", {t: "Setup Game"}, {click: function () {init_setup()}});
+        currentturn_el = G.cde("select", null, {}, [
+            G.cde("option", {t: "white", value: "w", selected:"selected"}),
+            G.cde("option", {t: "black", value: "b"}),
+        ]);
+
         goback_el = G.cde("button", {t: "Go back"}, {click: function () {goback()}});
         game_info_text = G.cde("span", {c: "gameInfoText"});
         var gameTypeSel = G.cde("Select", {oninput: changeType}, [
@@ -1751,7 +1769,8 @@
         
         center_el.appendChild(G.cde("documentFragment", [
             new_game_el,
-            setup_game_el,    
+            setup_game_el,
+            currentturn_el,    
             gameTypeSel,
             goback_el,    
             game_info_text,
@@ -2258,6 +2277,7 @@
         /// player.last_move_time
         ///NOTE: board.turn has already switched.
         color = board.turn === "b" ? "w" : "b";
+        currentturn_el.value = board.turn;
         game_history[ply] = {move: e.uci, ponder: e.ponder, turn: board.turn, pos: cur_pos_cmd, color: color};
         
         if (board.players[color].has_time) {

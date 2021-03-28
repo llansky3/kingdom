@@ -890,7 +890,7 @@ var BOARD = function board_init(el, options)
         ///NOTE: This does not find en passant captures. See below.
         captured_piece = get_piece_from_rank_file(square.rank, square.file);
         
-        if (board.get_mode() === "play") {
+        if (board.get_mode() === "play" || board.get_mode() === "goback") {
             /// Indicate that the board has been changed; it is not in the inital starting position.
             board.messy = true;
             
@@ -1238,12 +1238,12 @@ var BOARD = function board_init(el, options)
         board.last_move = {uci: uci, san: san};
     }
 
-    function restore_board_to_move(n) {
+    function restore_board_to_move(n, ic_startpos) {
         // Restores the board to the situation after N moves
         let history_of_moves = [...board.moves];
         let i;
         // Set the board to starting position
-        board.set_board();
+        board.set_board(ic_startpos);
         // Replay the moves
         for(i = 0; i < n; i++) {
             move(history_of_moves[i]);
