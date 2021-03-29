@@ -1352,7 +1352,8 @@ if (typeof gamesetup === 'undefined') {
                     return;
                 }
                 
-                if (goingback) {
+                
+                if (goingback && game_history.length > 0) {
                     startpos = "startpos";
                     set_cur_pos_cmd();
                     set_legal_moves(function onset() {
@@ -1361,7 +1362,7 @@ if (typeof gamesetup === 'undefined') {
                         hide_loading();
                         tell_engine_to_move();
                     });
-                    goingback = false;
+                    //goingback = false;
                 } else {   
                     zobrist_keys = [];
                     stalemate_by_rules = null;
@@ -1388,6 +1389,7 @@ if (typeof gamesetup === 'undefined') {
                         G.events.trigger("newGameBegins");
                     });
                 }
+                goingback = false;
             });
         });
     }
