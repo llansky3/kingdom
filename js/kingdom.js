@@ -1,9 +1,17 @@
+if (typeof gamesetup === 'undefined') {
+    var gamesetup = {blackview: false};
+} else {
+    if (gamesetup.blackview === undefined) {
+        gamesetup.blackview = false;
+    } 
+}
+
 (function ()
 {
     "use strict";
     
     var board_el = G.cde("div");
-    var board = BOARD(board_el);
+    var board = BOARD(board_el, {blackview: gamesetup.blackview});
     var zobrist_keys;
     var stalemate_by_rules;
     var evaler;
@@ -789,7 +797,7 @@
     function goback() {
         let current_mode = board.get_mode();
         board.set_mode("goback");
-        // TODO: Castling seems to be more moves - not really
+        // TODO: Black view,  Loading (PGN, saved position) and saving (current position and history)
         game_history = game_history.slice(0, game_history.length - 2);
         zobrist_keys = zobrist_keys.slice(0, zobrist_keys.length - 3);
         board.restore_board_to_move(board.moves.length - 2, goback_startpos);
@@ -2293,4 +2301,4 @@
     });
     
     init();
-}());
+}(gamesetup));

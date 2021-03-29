@@ -26,6 +26,18 @@ var BOARD = function board_init(el, options)
         fastDrag,
         setInitialDraggingPosition,
         isFlipped = false;
+
+    var blackview;    
+    if (typeof options === 'undefined') {
+        blackview = false;
+    }  else {
+        if (options.blackview === undefined) {
+            blackview = false;
+        } else {
+            blackview = options.blackview;
+        }
+    }
+        
     
     function num_to_alpha(num)
     {
@@ -411,24 +423,49 @@ var BOARD = function board_init(el, options)
         
         squares = [];
         hover_squares = [];
-        
-        for (y = board_details.ranks - 1; y >= 0; y -= 1) {
-            squares[y] = [];
-            hover_squares[y] = [];
-            for (x = 0; x < board_details.files; x += 1) {
-                squares[y][x] = make_square(x, y);
-                hover_squares[y][x] = make_hover_square(x, y);
-                if (x === 0) {
-                    cur_rank = make_rank(y);
-                    board.el.appendChild(cur_rank);
-                    squares[y][x].appendChild(make_board_num(y));
+     
+        if (blackview) {
+            // Black view of the board
+            for (y = 0; y < board_details.ranks; y += 1) {
+                squares[y] = [];
+                hover_squares[y] = [];
+                for (x = board_details.files - 1; x >= 0; x -= 1) {
+                    squares[y][x] = make_square(x, y);
+                    hover_squares[y][x] = make_hover_square(x, y);
+                    if (x === board_details.files - 1) {
+                        cur_rank = make_rank(y);
+                        board.el.appendChild(cur_rank);
+                        squares[y][x].appendChild(make_board_num(y));
+                    }
+                    if (y === board_details.ranks - 1) {
+                        squares[y][x].appendChild(make_board_letter(x));
+                    }
+                    squares[y][x].appendChild(hover_squares[y][x]);
+                    cur_rank.appendChild(squares[y][x]);
                 }
-                if (y === 0) {
-                    squares[y][x].appendChild(make_board_letter(x));
-                }
-                squares[y][x].appendChild(hover_squares[y][x]);
-                cur_rank.appendChild(squares[y][x]);
             }
+
+        } else {
+            // White view of the board
+            for (y = board_details.ranks - 1; y >= 0; y -= 1) {
+                squares[y] = [];
+                hover_squares[y] = [];
+                for (x = 0; x < board_details.files; x += 1) {
+                    squares[y][x] = make_square(x, y);
+                    hover_squares[y][x] = make_hover_square(x, y);
+                    if (x === 0) {
+                        cur_rank = make_rank(y);
+                        board.el.appendChild(cur_rank);
+                        squares[y][x].appendChild(make_board_num(y));
+                    }
+                    if (y === 0) {
+                        squares[y][x].appendChild(make_board_letter(x));
+                    }
+                    squares[y][x].appendChild(hover_squares[y][x]);
+                    cur_rank.appendChild(squares[y][x]);
+                }
+            }
+
         }
         
         board.el.classList.add("chess_board");
@@ -818,12 +855,21 @@ var BOARD = function board_init(el, options)
         if (!piece || !piece.el || !piece.el.style || !square) {
             return;
         }
-        
-        piece.el.style.top = -(square.rank * 100) + "%";
-        piece.el.style.bottom = (square.rank * 100) + "%";
-        
-        piece.el.style.left = (square.file * 100) + "%";
-        piece.el.style.right = -(square.file * 100) + "%";
+        if (blackview) {
+            // Black view of the board
+            piece.el.style.top = (square.rank * 100) + "%";
+            piece.el.style.bottom = -(square.rank * 100) + "%";
+            
+            piece.el.style.left = -(square.file * 100) + "%";
+            piece.el.style.right = (square.file * 100) + "%";
+        } else {
+            // White view of the board
+            piece.el.style.top = -(square.rank * 100) + "%";
+            piece.el.style.bottom = (square.rank * 100) + "%";
+            
+            piece.el.style.left = (square.file * 100) + "%";
+            piece.el.style.right = -(square.file * 100) + "%";
+        }
         
         if (!do_not_save) {
             piece.rank = square.rank;
