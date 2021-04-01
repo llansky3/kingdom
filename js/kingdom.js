@@ -25,7 +25,9 @@ if (typeof gamesetup === 'undefined') {
     var goback_el; 
     var goingback = false;
     var goback_startpos; 
-    var currentturn_el;  
+    var currentturn_el;
+    var loadgame_el;
+    var savegame_el;  
     var game_info_text;
     var starting_new_game;
     var retry_move_timer;
@@ -789,6 +791,8 @@ if (typeof gamesetup === 'undefined') {
         setup_game_el.disabled = true;
         goback_el.disabled = false;
         currentturn_el.disabled = false;
+        loadgame_el.disabled = false;
+        savegame_el.disabled = false;
         hide_loading(true);
         board.enable_setup();
         G.events.trigger("initSetup");
@@ -803,7 +807,52 @@ if (typeof gamesetup === 'undefined') {
         board.restore_board_to_move(board.moves.length - 2, goback_startpos);
         board.set_mode(current_mode);
         goingback = true;
-    }    
+    } 
+    
+    function loadgame(name) {
+        if (typeof name === 'undefined') {
+            name = "default";
+        }
+        let games = localStorage.getItem("kingdom");
+        if (games !== null) {
+            games = JSON.parse(games);
+            if (name in games) {
+                let game = games[name];
+                goback_startpos = game["startpos"];
+                game_history = game["game_history"];
+                zobrist_keys = game["zobrist_keys"];
+                board.moves = game["moves"];
+                let current_mode = board.get_mode();
+                board.set_mode("goback");
+                board.restore_board_to_move(board.moves.length, goback_startpos);
+                board.set_mode(current_mode);
+                goingback = true;
+            }
+        }
+
+
+        //JSON.parse()
+    }
+
+    function savegame(name) {
+        if (typeof name === 'undefined') {
+            name = "default";
+        }
+
+        let games = localStorage.getItem("kingdom");
+        if (games === null) {
+            games = {};
+        } else {
+            games = JSON.parse(games);
+        }
+        games["default"] = {
+            "startpos": goback_startpos,
+            "game_history": game_history,
+            "zobrist_keys": zobrist_keys,
+            "moves": board.moves
+        }
+        localStorage.setItem("kingdom",JSON.stringify(games))    
+    }
     
     function check_startpos(cb)
     {
@@ -1269,6 +1318,8 @@ if (typeof gamesetup === 'undefined') {
         setup_game_el.disabled = false;
         goback_el.disabled = true;
         currentturn_el.disabled = true;
+        loadgame_el.disabled = true;
+        savegame_el.disabled = true;
         
         if (starting_new_game) {
             return;
@@ -1776,6 +1827,10 @@ if (typeof gamesetup === 'undefined') {
             G.cde("option", {value: "knightSight", t: "Knight Sight"}),
             G.cde("option", {value: "knightJump", t: "Knight Jump"}),
         ]);
+
+        loadgame_el = G.cde("button", {t: "Load"}, {click: function () {loadgame()}});
+        savegame_el = G.cde("button", {t: "Save"}, {click: function () {savegame()}});
+
         
         center_el.appendChild(G.cde("documentFragment", [
             new_game_el,
@@ -1784,6 +1839,8 @@ if (typeof gamesetup === 'undefined') {
             gameTypeSel,
             goback_el,    
             game_info_text,
+            loadgame_el,
+            savegame_el,
         ]));
         
         layout.rows[2].cells[1].appendChild(center_el);
