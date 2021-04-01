@@ -27,7 +27,11 @@ if (typeof gamesetup === 'undefined') {
     var goback_startpos; 
     var currentturn_el;
     var loadgame_el;
-    var savegame_el;  
+    var savegame_el; 
+    var deletegame_el;
+    var gamename_el; 
+    var gamesoptions;
+    var availablegames_el;
     var game_info_text;
     var starting_new_game;
     var retry_move_timer;
@@ -793,6 +797,9 @@ if (typeof gamesetup === 'undefined') {
         currentturn_el.disabled = false;
         loadgame_el.disabled = false;
         savegame_el.disabled = false;
+        gamename_el.disabled = false;
+        deletegame_el.disabled = false;
+        availablegames_el.disabled = false;
         hide_loading(true);
         board.enable_setup();
         G.events.trigger("initSetup");
@@ -809,10 +816,8 @@ if (typeof gamesetup === 'undefined') {
         goingback = true;
     } 
     
-    function loadgame(name) {
-        if (typeof name === 'undefined') {
-            name = "default";
-        }
+    function loadgame() {
+        let name = gamename_el.value;
         let games = localStorage.getItem("kingdom");
         if (games !== null) {
             games = JSON.parse(games);
@@ -821,6 +826,7 @@ if (typeof gamesetup === 'undefined') {
                 goback_startpos = game["startpos"];
                 game_history = game["game_history"];
                 zobrist_keys = game["zobrist_keys"];
+                currentturn_el.value = game["turn"];
                 board.moves = game["moves"];
                 let current_mode = board.get_mode();
                 board.set_mode("goback");
@@ -829,27 +835,41 @@ if (typeof gamesetup === 'undefined') {
                 goingback = true;
             }
         }
-
-
-        //JSON.parse()
     }
 
-    function savegame(name) {
-        if (typeof name === 'undefined') {
-            name = "default";
+    function deletegame() {
+        let name = gamename_el.value;
+        let games = localStorage.getItem("kingdom");
+        if (games !== null) {
+            games = JSON.parse(games);
+            if (name in games) {
+                delete games[name];
+                localStorage.setItem("kingdom",JSON.stringify(games));
+                gamesoptions.length = 0;
+                let i;
+                for (i in games) {
+                    gamesoptions.push(G.cde("option", {t: i, value: i}));
+                }
+                //availablegames_el = G.cde("Select", {oninput: changeGameName}, gamesoptions);
+            }
         }
+    }
 
+    function savegame() {
+        let name = gamename_el.value;
+       
         let games = localStorage.getItem("kingdom");
         if (games === null) {
             games = {};
         } else {
             games = JSON.parse(games);
         }
-        games["default"] = {
+        games[name] = {
             "startpos": goback_startpos,
             "game_history": game_history,
             "zobrist_keys": zobrist_keys,
-            "moves": board.moves
+            "moves": board.moves,
+            "turn": currentturn_el.value,
         }
         localStorage.setItem("kingdom",JSON.stringify(games))    
     }
@@ -1320,7 +1340,9 @@ if (typeof gamesetup === 'undefined') {
         currentturn_el.disabled = true;
         loadgame_el.disabled = true;
         savegame_el.disabled = true;
-        
+        gamename_el.disabled = true;
+        deletegame_el.disabled = true;
+        availablegames_el.disabled = true;
         if (starting_new_game) {
             return;
         }
@@ -1369,15 +1391,23 @@ if (typeof gamesetup === 'undefined') {
                 //board.turn = "b"; //?
                 board.turn = currentturn_el.value; 
                 if (goingback) {
-                    startpos = board.get_fen() + " " + board.turn + " - - 0 1";
-                    board.set_board(startpos, true);
+                    //* startpos = board.get_fen() + " " + board.turn + " - - 0 1";
+                    //* board.set_board(startpos, true);
+                    startpos = goback_startpos;
                 } else {
                     //startpos = board.get_fen() + " " + board.turn + " - - 0 " + n_fullmoves;
                     startpos = board.get_fen() + " " + board.turn + " - - 0 " + n_fullmoves;
                     board.set_board(startpos);
                     goback_startpos = startpos;
                 }
-                startpos = "fen " + startpos;
+
+                if (typeof startpos === 'undefined') {
+                    startpos = "startpos";
+                } else {
+                    startpos = "fen " + startpos;
+                }
+
+                //*startpos = "fen " + startpos;
                 ///TODO: Get move count.
                 /*
                 if (move_count > 0) {
@@ -1405,7 +1435,7 @@ if (typeof gamesetup === 'undefined') {
                 
                 
                 if (goingback && game_history.length > 0) {
-                    startpos = "startpos";
+                    //startpos = "startpos";
                     set_cur_pos_cmd();
                     set_legal_moves(function onset() {
                         prep_eval(game_history[game_history.length - 1].pos, game_history.length - 1);
@@ -1810,6 +1840,11 @@ if (typeof gamesetup === 'undefined') {
     {
         gameType = this.value;
     }
+
+    function changeGameName()
+    {
+        gamename_el.value = availablegames_el.value;
+    }
     
     function create_center()
     {
@@ -1830,7 +1865,19 @@ if (typeof gamesetup === 'undefined') {
 
         loadgame_el = G.cde("button", {t: "Load"}, {click: function () {loadgame()}});
         savegame_el = G.cde("button", {t: "Save"}, {click: function () {savegame()}});
-
+        deletegame_el = G.cde("button", {t: "Delete"}, {click: function () {deletegame()}});
+        gamename_el = G.cde("input", {value: "default"}, {click: function () {savegame()}});
+        
+        gamesoptions = [];
+        let games = localStorage.getItem("kingdom");
+        if (games !== null) {
+            games = JSON.parse(games);
+            let name;
+            for (name in games) {
+                gamesoptions.push(G.cde("option", {t: name, value: name}))
+            }
+        }
+        availablegames_el = G.cde("Select", {oninput: changeGameName}, gamesoptions);
         
         center_el.appendChild(G.cde("documentFragment", [
             new_game_el,
@@ -1841,6 +1888,9 @@ if (typeof gamesetup === 'undefined') {
             game_info_text,
             loadgame_el,
             savegame_el,
+            deletegame_el,
+            gamename_el,
+            availablegames_el,
         ]));
         
         layout.rows[2].cells[1].appendChild(center_el);
