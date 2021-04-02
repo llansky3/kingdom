@@ -847,10 +847,11 @@ if (typeof gamesetup === 'undefined') {
                 localStorage.setItem("kingdom",JSON.stringify(games));
                 gamesoptions.length = 0;
                 let i;
-                for (i in games) {
-                    gamesoptions.push(G.cde("option", {t: i, value: i}));
+                for (i = 0; availablegames_el.options.length; i++) {
+                    if (availablegames_el.options[i].value == name) {
+                        availablegames_el.options.remove(i);
+                    }
                 }
-                //availablegames_el = G.cde("Select", {oninput: changeGameName}, gamesoptions);
             }
         }
     }
@@ -864,6 +865,11 @@ if (typeof gamesetup === 'undefined') {
         } else {
             games = JSON.parse(games);
         }
+        if (!(name in games)) {
+            gamesoptions.push(G.cde("option", {t: name, value: name}));
+            availablegames_el.options.add(gamesoptions[gamesoptions.length - 1]);
+        }    
+
         games[name] = {
             "startpos": goback_startpos,
             "game_history": game_history,
