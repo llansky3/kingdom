@@ -1,9 +1,16 @@
 if (typeof gamesetup === 'undefined') {
-    var gamesetup = {blackview: false};
+    var gamesetup = {
+        blackview: false,
+        ratingsliderview: true,
+    };
 } else {
     if (gamesetup.blackview === undefined) {
         gamesetup.blackview = false;
+    }
+    if (gamesetup.ratingsliderview === undefined) {
+        gamesetup.ratingsliderview = true;
     } 
+
 }
 
 (function ()
@@ -2160,6 +2167,11 @@ if (typeof gamesetup === 'undefined') {
         var container = G.cde("div", {c: "ratingContainer"});
         var slider_el = G.cde("div", {c: "ratingSlider"});
         var canvas = G.cde("canvas", {c: "ratingCanvas"});
+
+        if (gamesetup.ratingsliderview === false) {
+            slider_el.style.visibility = "hidden";
+        }
+        
         var obj = {max: 1000, min: -1000, value: 0};
         var ctx = canvas.getContext("2d");
         

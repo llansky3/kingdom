@@ -38,7 +38,6 @@ var BOARD = function board_init(el, options)
         }
     }
         
-    
     function num_to_alpha(num)
     {
         return "abcdefgh"[num];
