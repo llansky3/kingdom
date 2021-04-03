@@ -821,6 +821,7 @@ if (typeof gamesetup === 'undefined') {
         board.restore_board_to_move(board.moves.length - 2, goback_startpos);
         board.set_mode(current_mode);
         goingback = true;
+        reload_movesmanager();
     } 
     
     function loadgame() {
