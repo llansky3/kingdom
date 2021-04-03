@@ -42,6 +42,12 @@ html, body {
     margin: 0px 4px;
 }
 
+.center_gamesetup_el {
+    margin: 0px 4px;
+    background-color: lavenderblush;
+
+}
+
 .table_cell_1_0 {
     padding-left: 5px;
 }

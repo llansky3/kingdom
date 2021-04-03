@@ -26,6 +26,7 @@ if (typeof gamesetup === 'undefined') {
     var player1_el = G.cde("div", {c: "player player_white player_left"});
     var player2_el = G.cde("div", {c: "player player_black player_right"});
     var center_el  = G.cde("div", {c: "center_el"});
+    var center_gamesetup_el = G.cde("div", {c: "center_gamesetup_el"});
     var rating_slider;
     var new_game_el;
     var setup_game_el;
@@ -477,8 +478,7 @@ if (typeof gamesetup === 'undefined') {
     
     function prep_eval(pos, ply)
     {
-        game_history[ply].pos = pos;
-        
+        game_history[ply].pos = pos;        
         setTimeout(eval_stack, 0);
     }
     
@@ -840,6 +840,7 @@ if (typeof gamesetup === 'undefined') {
                 board.restore_board_to_move(board.moves.length, goback_startpos);
                 board.set_mode(current_mode);
                 goingback = true;
+                reload_movesmanager();
             }
         }
     }
@@ -885,6 +886,20 @@ if (typeof gamesetup === 'undefined') {
             "turn": currentturn_el.value,
         }
         localStorage.setItem("kingdom",JSON.stringify(games))    
+    }
+
+    function reload_movesmanager() {
+        moves_manager.reset_moves();
+        let i;
+        for (i = 1; i < game_history.length; i++) {
+            moves_manager.add_move({
+                color: game_history[i].color, san: game_history[i].san, time: undefined, ply: i - 1, scoll_to_bottom: true});
+        }
+        // Math.floor(i/2)
+        //g.color 
+        //moves_manager.add_move({color: color, san: e.san, time: game_history[ply].move_time, ply: ply - 1, scoll_to_bottom: true});
+
+
     }
     
     function check_startpos(cb)
@@ -1897,16 +1912,20 @@ if (typeof gamesetup === 'undefined') {
             setup_game_el,
             currentturn_el,    
             gameTypeSel,
-            goback_el,    
             game_info_text,
+        ]));
+
+        center_gamesetup_el.appendChild(G.cde("documentFragment", [
+            goback_el,    
             loadgame_el,
             savegame_el,
             deletegame_el,
             gamename_el,
             availablegames_el,
         ]));
-        
+
         layout.rows[2].cells[1].appendChild(center_el);
+        layout.rows[3].cells[1].appendChild(center_gamesetup_el);
     }
     
     function make_clocks()
@@ -2317,7 +2336,7 @@ if (typeof gamesetup === 'undefined') {
     
     function create_table()
     {
-        var table_info = [3, 3, 3];
+        var table_info = [3, 3, 3, 3];
         
         layout.table = G.cde("div", {c: "table"});
         layout.rows = [];
@@ -2413,7 +2432,7 @@ if (typeof gamesetup === 'undefined') {
         ///NOTE: board.turn has already switched.
         color = board.turn === "b" ? "w" : "b";
         currentturn_el.value = board.turn;
-        game_history[ply] = {move: e.uci, ponder: e.ponder, turn: board.turn, pos: cur_pos_cmd, color: color};
+        game_history[ply] = {move: e.uci, ponder: e.ponder, turn: board.turn, pos: cur_pos_cmd, color: color, san: e.san};
         
         if (board.players[color].has_time) {
             game_history[ply].move_time = board.players[color].last_move_time;
