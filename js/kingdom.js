@@ -41,6 +41,7 @@ if (typeof gamesetup === 'undefined') {
     var gamesoptions;
     var availablegames_el;
     var game_info_text;
+    var license_text;
     var starting_new_game;
     var retry_move_timer;
     var clock_manager;
@@ -833,7 +834,7 @@ if (typeof gamesetup === 'undefined') {
                 let game = games[name];
                 goback_startpos = game["startpos"];
                 game_history = game["game_history"];
-                zobrist_keys = game["zobrist_keys"];
+                zobrist_keys = game["zobrist_keys"].slice(0, game["zobrist_keys"].length - 1);
                 currentturn_el.value = game["turn"];
                 board.moves = game["moves"];
                 let current_mode = board.get_mode();
@@ -1886,6 +1887,7 @@ if (typeof gamesetup === 'undefined') {
 
         goback_el = G.cde("button", {t: "Go back"}, {click: function () {goback()}});
         game_info_text = G.cde("span", {c: "gameInfoText"});
+        license_text = G.cde("a", {c: "gameInfoText", t: "Licenses", href: "https://github.com/nmrugg/kingdom/blob/master/readme.md"});
         var gameTypeSel = G.cde("Select", {oninput: changeType}, [
             G.cde("option", {value: "standard", t: "Standard", selected:"selected"}),
             G.cde("option", {value: "knightSight", t: "Knight Sight"}),
@@ -1914,6 +1916,7 @@ if (typeof gamesetup === 'undefined') {
             currentturn_el,    
             gameTypeSel,
             game_info_text,
+            license_text,
         ]));
 
         center_gamesetup_el.appendChild(G.cde("documentFragment", [

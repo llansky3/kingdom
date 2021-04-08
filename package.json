@@ -1,0 +1,26 @@
+{
+  "name": "kingdom",
+  "version": "1.0.0",
+  "description": "The fate of the kingdom is in your hands.",
+  "main": "server.js",
+  "dependencies": {
+    "girdle": "^0.3.2",
+    "nodemon": "^2.0.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "debug": "nodemon --inspect server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llansky3/kingdom.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/llansky3/kingdom/issues"
+  },
+  "homepage": "https://github.com/llansky3/kingdom#readme"
+}
